@@ -1,0 +1,80 @@
+// Usefull Commands + PluralSight Tutorial
+//===========================    SPEAK     =================================
+
+using System.Speech.Synthesis;
+
+			SpeechSynthesizer synth = new SpeechSynthesizer();
+            synth.Speak("HEllo Rhiane, Kirten and KQ, How are you??");
+            synth.Speak("I am Miroslaws first speeking computer hahaha");
+
+			
+//======================         SLEEP       ================================
+
+ while(true)
+{
+  send("OK");
+  Thread.Sleep(100); //Sleep for 100 milliseconds
+}
+
+// ===== or 
+
+// Sleep for five seconds
+System.Threading.Thread.Sleep(5000);
+
+
+//======================    STARTING DATABASE    =============================
+Search "sqlLocalDb" from start menu,
+Click on the run command,
+Go back to VS 2015 tools/connect to database,
+select MSSQL server,
+enter (localdb)\MSSQLLocalDB as server name
+Select your database and ready to go.
+
+
+//=================   This way worked through oralce start database cmd - UPDATE* just run it in CMD works 100%   ==========
+Open command prompt
+Run SqlLocalDB.exe start v11.0
+Run SqlLocalDB.exe info v11.0
+Copy the Instance pipe name that starts with np:\...
+			--------------   np:\\.\pipe\LOCALDB#520E2A4B\tsql\query
+							np:\\.\pipe\LOCALDB#0C003A7A\tsql\query
+							np:\\.\pipe\LOCALDB#A1557D9E\tsql\query
+							
+							
+//======================      
+
+
+
+//======================    DateTime    =============================
+//This adds the simple validation to the date and time......
+
+	public override bool IsValid(object value)      //"value" would be the value of the date
+	{
+		string[] dateFormats = { "d/M/yyyy", "d/MM/yyyy", "dd/MM/yyyy", "d MMM yyyy", "dd/mm/yyyy" };
+
+		DateTime dateTime;
+		
+		var isValid = DateTime.TryParseExact(Convert.ToString(value), 
+			dateFormats, 
+			CultureInfo.CurrentCulture, 
+			DateTimeStyles.None, 
+			out dateTime);
+
+		return (isValid && dateTime > DateTime.Now);        // Checking if the date is in the future.
+	}
+
+	// or if youd like to check the time......
+	
+	public override bool IsValid(object value)      //"value" would be the value of the date
+	{
+		string[] timeFormats = { "HH:mm", "H:mm" };
+		DateTime dateTime;
+
+		var isValid = DateTime.TryParseExact(Convert.ToString(value),
+			timeFormats,
+			CultureInfo.CurrentCulture,
+			DateTimeStyles.None,
+			out dateTime);
+
+		return (isValid);
+	}
