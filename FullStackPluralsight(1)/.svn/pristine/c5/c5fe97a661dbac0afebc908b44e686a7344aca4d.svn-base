@@ -1,0 +1,244 @@
+﻿body {
+    padding-top: 80px;
+    padding-bottom: 20px;
+}
+
+/* Set padding to keep content from hitting the edges */
+.body-content {
+    padding-left: 15px;
+    padding-right: 15px;
+}
+
+/* Override the default bootstrap behavior where horizontal description lists 
+   will truncate terms that are too long to fit in the left column 
+*/
+.dl-horizontal dt {
+    white-space: normal;
+}
+
+/* Set width on the form input elements since they're 100% wide by default */
+input,
+select,
+textarea {
+    max-width: 300px;
+}
+
+
+/* red font for a validation msg*/
+span.field-validation-error {
+    color: red;
+    font-weight: bold;
+}
+.voffset { margin-top: 2px; }
+.voffset1 { margin-top: 5px; }
+.voffset2 { margin-top: 10px; }
+.voffset3 { margin-top: 20px; }
+.voffset4 { margin-top: 40px; }
+
+/*-------------------------------------------------------------------*/
+
+/* bootstrap overrides*/
+.navbar-inverse {
+    background-color: #ff4342;
+    border-color: #ff4342;
+}
+
+.navbar-inverse .navbar-nav > li > a {
+    color: #fff;
+}
+.navbar-inverse .navbar-brand {
+    color: #fff;
+}
+
+.navbar-inverse .notifications {
+    position: relative;
+}
+
+.navbar-inverse .notifications .badge {
+    position: absolute;
+    top: 8px;
+    right: -1px;
+    background-color: #a80a0a;
+}
+
+.navbar-inverse .navbar-nav > .open > a, .navbar-inverse .navbar-nav > .open > a:hover, .navbar-inverse .navbar-nav > .open > a:focus {
+    background-color: rgba(225, 43, 42, 0.53);
+}
+
+.navbar-brand {
+    font-size: 20px;
+    font-weight: 600;
+}
+
+.dropdown-menu {
+    -webkit-box-shadow: none;
+    box-shadow: none;
+}
+
+.navbar-inverse .navbar-nav > .dropdown > a .caret {
+    border-top-color: #fff;
+    border-bottom-color: #fff;
+}
+
+body{
+    font-size: 16px;
+}
+
+body,
+h1,
+h2,
+h3,
+h4,
+h5,
+h6,
+.h1,
+.h2,
+.h3,
+.h4,
+.h5,
+.h6 {
+  font-family: Lato, "Helvetica Neue", Helvetica, Arial, sans-serif;
+}
+
+/* This is for Add Gig to be a bit higher up/closer to the nav bar*/
+h1, h2, h3 {
+    margin-top: 3px;
+    margin-bottom: 10px;
+}
+
+.alert-info {
+    color: #3a87ad;
+    background-color: #d9edf7;
+    border-color: #bce8f1;
+    width: 300px;
+    padding: 3px 60px;
+    border-radius: 6px;
+}
+
+/* margin between the boxes in the form*/
+.form-group {
+    margin-bottom: 15px;
+}
+
+/* font of the title of the box and the font of the box*/
+.form-control{
+    font-size: 16px;
+    height: 44px;
+    border-radius: 9px;
+    -ms-boarder-radius: 9px;        /* thats a vendor specific property. It makes sure that old browser will also apply this radius*/
+    
+}
+
+.form-control:focus {
+    border-color: #ff4342;
+    box-shadow: none;
+    -webkit-box-shadow: none;
+}
+
+.btn {
+    font-size: 13px;
+    padding: 5px 10px;
+    border-radius: 9px;
+    -ms-boarder-radius: 9px;
+}
+
+.btn-lg {
+    font-size: 16px;
+    padding: 6px 16px;
+}
+
+/* Page-level Styles*/
+/* chevron below means immediately after the li */
+.gigs {
+    list-style: none;
+}
+
+.gigs > li {
+    position: relative;
+    margin-bottom: 30px;
+}
+
+.gigs > li .date {
+    background: red;
+    color: white;
+    text-align: center;
+    width: 60px;
+    height: 60px;
+    border-radius: 8px;
+    -ms-border-radius: 8px
+}
+
+.gigs > li .date .month {
+    text-transform: uppercase;
+    font-size: 14px;
+    font-weight: bold;
+    padding: 2px 6px;
+}
+
+.gigs > li .date .day {
+    background: #f7f7f7;
+    color: black;
+    font-size: 20px;
+    padding: 3px 6px;
+}
+
+.gigs > li .details{
+    position: absolute;
+    top: 0px;
+    left: 70px;
+}
+
+.gigs > li .details .btn{
+    position: absolute;
+    left: 200px;
+}
+
+.gigs > li .details .artist {
+    font-weight: bold;
+    display: block;
+}
+
+.gigs > li .details .genre {
+    font-size: 14px;    
+}
+
+.gigs > li .details .venueDetails {
+    font-size: 14px;
+    font-weight: 600;
+}
+
+.gigs > li  .actions {
+    font-size: 15px;
+    display: none;
+}
+
+.gigs > li:hover .actions {
+    display: block;
+}
+
+.popover {
+      -webkit-box-shadow: none;
+          box-shadow: none;
+}
+
+.popover-notifications .popover-content {
+    padding: 0px;
+}
+
+ul.notifications {
+    list-style: none;
+    padding-left: 0px;
+}
+
+ul.notifications > li {
+    border-bottom: 1px solid #ddd;
+    padding: 10px;
+}
+
+ul.notifications > li:last-child {
+    border-bottom: none;
+}
+
+ul.notifications .highlight {
+    font-weight: bold;
+}

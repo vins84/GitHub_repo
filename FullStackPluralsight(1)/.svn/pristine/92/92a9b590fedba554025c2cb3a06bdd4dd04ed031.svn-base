@@ -1,0 +1,130 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>@ViewBag.Title - My Gig WebPage </title>
+    <link href="https://fonts.googleapis.com/css?family=Lato:400,700|Montserrat:400,700" rel="stylesheet">
+    @Styles.Render("~/Content/css")
+    @Scripts.Render("~/bundles/modernizr")
+</head>
+<body>
+    <div class="navbar navbar-inverse navbar-fixed-top">
+        <div class="container">
+            <div class="navbar-header">
+                <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-collapse">
+                    <span class="icon-bar"></span>
+                    <span class="icon-bar"></span>
+                    <span class="icon-bar"></span>
+                </button>
+                @Html.ActionLink("My Gig Home Page", "Index", "Home", new { area = "" }, new { @class = "navbar-brand" })
+            </div>
+            <div class="navbar-collapse collapse">
+                <ul class="nav navbar-nav">
+                    <li><a href="/Gigs/Create" style="direction: rtl;">Add a Gig</a></li>
+                </ul>
+                <form action="/Account/LogOff" class="navbar-right" id="logoutForm" method="post">
+                    <input name="__RequestVerificationToken" type="hidden" value="CmgZR5N0sR9qoKTqnwTq6sabrxK6qHKlfsv0q3IXzKy3h23CceCclfWt5ANKEzNgXHDFtMj6y77p5zdUOxaNdVBKsfmcTUtW_I5ECPYVJLMan8pbBZ0GtHx8NhKgyKvl-1JV3b-vyrINlLAb1RvE9w2">    <ul class="nav navbar-nav navbar-right">
+                        <li class="notifications" data-original-title="" title="">
+                            <a href="#" class="">
+                                <i class="glyphicon glyphicon-globe"></i>
+                                <span class="badge js-notifications-count animated bounceInDown">6</span>
+                            </a>
+                        </li>
+                        <li class="dropdown">
+                            <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">
+                                Hi!   miroslawkaczor@hotmail.co.uk
+                                <span class="caret"></span>
+                            </a>
+                            <ul class="dropdown-menu">
+                                <li><a href="/Gigs/Mine">My Upcoming Gigs</a></li>
+                                <li><a href="/Gigs/Attending">Gig I'm Going To</a></li>
+                                <li><a href="/Followees">Artists I'm Following</a></li>
+                                <li><a href="/Manage" title="Manage">Hello Manage Account!</a></li>
+                                <li role="separator" class="divider"></li>
+                                <li><a href="javascript:document.getElementById('logoutForm').submit()">Log off</a></li>
+                            </ul>
+                        </li>
+                    </ul>
+                </form>
+            </div>
+        </div>
+    </div>
+    <div class="container body-content">
+        @RenderBody()
+        <hr />
+        <footer>
+            <p>&copy; @DateTime.UtcNow  -  My Gig WebPage from Pluralsight (Mirek Forever)</p>
+        </footer>
+    </div>
+
+    @Scripts.Render("~/bundles/lib")
+    @RenderSection("scripts", required: false)
+
+    <script type="text/x-template" id="notifications-template">
+        <ul class="notifications">
+            <%
+            _.each(notifications, function (notification){
+            if (notification.type == 1) { %>
+            <li>
+                <span class="highlight"><%= notification.gig.artist.name %></span> has canceled the gig at <%= notification.gig.venue %> at <%= moment(notification.gig.dateTime).format("DD MMM YYYY HH:mm") %>.
+            </li>
+            <% }
+            else if (notification.type == 2) {
+            var changes = [],
+            originalValues = [],
+            newValues = [];
+
+            if (notification.originalVenue != notification.gig.venue) {
+            changes.push('venue');
+            originalValues.push(notification.originalVenue);
+            newValues.push(notification.gig.venue);
+
+            }
+            if (notification.originalDateTime != notification.gig.dateTime) {
+            changes.push('date/time');
+            originalValues.push(moment(notification.originalDateTime).format("DD MMM YYYY HH:mm"));
+            newValues.push(moment(notification.gig.dateTime).format("DD MMM YYYY HH:mm"));
+
+            }
+            %>
+            <li>
+                <span class="highlight"><%= notification.gig.artist.name %></span> has changed the <%= changes.join(' and ') %> of the gig from <%= originalValues.join('/') %> to <%= newValues.join('/') %>
+            </li>
+            <%
+            }
+            })
+            %>
+        </ul>
+    </script>
+    <script>
+        $(document).ready(function () {
+            $.getJSON("/api/notifications", function (notifications) {
+
+                if (notifications.length == 0)
+                    return;
+
+                $(".js-notifications-count")
+                    .text(notifications.length)
+                    .removeClass("hide")
+                    .addClass("animated bounceInDown");
+
+                $(".notifications").popover({
+                    html: true,
+                    title: "Notifications",
+                    content: function () {
+                        var compiled = _.template($("#notifications-template").html());
+                        return compiled({ notifications: notifications });
+                    },
+                    placement: "bottom",
+                    template: '<div class="popover popover-notifications" role="tooltip"><div class="arrow"></div><h3 class="popover-title"></h3><div class="popover-content"></div></div>'
+
+                });
+            });
+
+        });
+    </script>
+
+</body>
+
+</html>

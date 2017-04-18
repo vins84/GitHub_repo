@@ -1,0 +1,111 @@
+﻿@model FullStackPluralsight.ViewModels.GigsViewModel
+@{
+    ViewBag.Title = "Home Page";
+}
+
+<h1>@Model.Heading</h1>
+
+<ul class = "gigs voffset4">
+    @foreach (var gig in Model.UpcomingGigs)
+    {
+        <!-- <li>@gig.DateTime - @gig.Venue - @gig.Artist.Name</li> -->     <!-- This can soon be deleted --> 
+        <li>
+            <div class="date">
+                <div class="month">
+                    @gig.DateTime.ToString("MMM")
+                </div>
+                <div class="day">
+                    @gig.DateTime.ToString("d ")        <!-- Remember to put a space after a d to display one digit day-->
+                </div>
+            </div>
+            <div class="details">
+                @if (Model.ShowActions)
+                {
+                    <button class="btn btn-link btn-sm js-toggle-follow" data-user-id="@gig.ArtistId"> Follow </button>
+                }
+                
+                <span class="artist">
+                    @gig.Artist.Name 
+                    @if (gig.IsCanceled)
+                    {
+                        <span class="label label-warning">Gig canceled</span>
+                    }
+                </span>
+                <span class="genre">
+                    Genre : @gig.Genre.Name             <!-- For this to work you must add .Include() in a Home Controller -->
+                </span>
+
+                <div class="venueDetails">
+                    <span class="venue">
+                        @if (Model.ShowActions && !gig.IsCanceled)
+                        {
+                            <button class="btn btn-default btn-sm pull-right js-toggle-attendance" data-gig-id="@gig.Id">Going ?</button>
+                        }
+                        
+                        Venue : 
+                            @if (gig.Venue == "Leeds O2 Arena")
+                            {
+                                <a href="https://academymusicgroup.com">@gig.Venue</a>
+                            }
+                            else if (gig.Venue == "Manchester O2 Arena")
+                            {
+                                <a href="https://o2apollomanchester.co.uk">@gig.Venue</a>
+                            }
+                            else
+                            {
+                                @gig.Venue
+                            }
+                    </span>
+                </div>
+            </div>
+        </li>
+    }
+</ul>
+<button id="submit">Submit JQuery</button>
+<p id="mirek" style="display:none">Gig Successfully added</p>
+
+@section scripts
+{
+    <script>
+    $(document).ready(function() {
+        $(".js-toggle-attendance").click(function(event) {
+
+            var button = $(event.target);
+
+            $.post("/api/attendances", { gigId: button.attr("data-gig-id") })
+                .done(function () {
+                    button.removeClass("btn-default")
+                        .addClass("btn-info")
+                        .text("Going");
+                })
+                .fail(function () {
+                    alert("Something failed !")
+                });
+        });
+        $(".js-toggle-follow").click(function (event) {
+
+            var button = $(event.target);
+
+            $.post("/api/followings", { followeeId: button.attr("data-user-id") })
+                .done(function () {
+                    button.text("Yes I am following");
+                })
+                .fail(function () {
+                    alert("You already following you fool ;)!")
+                });
+        });
+    });
+    </script>
+    
+    <script type="text/javascript">
+        $(document).ready(function () {
+            WireEvents();
+        });
+
+        function WireEvents() {
+            $('#submit').click(function () {
+                $("p").show('slow')
+            });
+        }
+    </script>
+}
