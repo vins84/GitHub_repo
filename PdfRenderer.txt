@@ -1,0 +1,348 @@
+http://www.pdfsharp.com/PDFsharp/index.php?option=com_content&task=view&id=33&Itemid=48
+http://www.pdfsharp.net/wiki/Graphics-sample.ashx
+https://stackoverflow.com/questions/24651347/how-to-save-a-newly-created-pdf-file-using-savefiledialog
+http://www.pdfsharp.net/wiki/PDFsharpSamples.ashx
+http://blog.scottlogic.com/2012/10/05/pdf-generation-and-printing-in-net-2.html
+https://www.syncfusion.com/kb/4629/how-to-convert-the-pdf-stored-in-a-pdfdocument-object-to-byte-array
+http://www.pdfsharp.net/wiki/Annotations-sample.ashx
+http://www.pdfsharp.net/wiki/DocumentViewer-sample.ashx
+http://www.pdfsharp.com/PDFsharp/index.php?option=com_content&task=view&id=15&Itemid=35
+
+http://www.aspforums.net/Threads/198379/Download-Display-PDF-file-in-browser-using-C-in-ASPNet-MVC/				-		Might be good
+https://www.codeproject.com/Tips/697733/Display-PDF-within-web-browser-using-MVC								-		might have good examples
+http://www.pdfsharp.net/wiki/MixMigraDocAndPdfSharp-sample.ashx
+							
+
+//this to change into array of byte and then view on the scren and save method
+byte[] fileContents = null; 
+using(MemoryStream stream = new MemoryStream()) 
+{ 
+pdfDoc.Save(stream, true); 
+fileContents = stream.ToArray(); 
+}
+
+
+//======================			NuGet			=============================
+Install-Package HtmlRenderer.PdfSharp -Version 1.5.0.6
+or
+Install-Package HtmlRenderer.PdfSharp
+
+
+
+private static void Main(string[] args)
+{
+	PdfDocument pdf = PdfGenerator.GeneratePdf("<p><h1>Hello World</h1>This is html rendered text</p>", PageSize.A4);
+	pdf.Save("document.pdf");
+}
+
+
+//======================			This has defo worked 16102017			=============================
+[HttpPost]
+public ActionResult Index(ReportViewModel model, string save)
+{
+	using (AtomScanningContext context = new AtomScanningContext())
+	{
+		IEnumerable<ScanningReporting> query = context.BoxScans.Where(
+				b => b.DateScanned >= model.DateFrom && b.DateScanned <= model.DateTo && b.ScanningProject.Customer == model.Customer)
+				.ToList()
+			.GroupBy(b => b.BOXId)
+			.Select(s => new ScanningReporting()
+			{
+				BoxId = s.Key.ToString(),
+				Barcode1 = s.Count(t => t.ScannedBarcode.Length > 0) > 1 ? s.Where(t => t.ScannedBarcode.Length > 0).OrderByDescending(t => t.Id).First().ScannedBarcode : s.First().ScannedBarcode,
+				Barcode2 = s.Count(t => t.ScannedBarcode.Length > 0) > 1 ? s.Where(t => t.ScannedBarcode.Length > 0).OrderByDescending(t => t.Id).Skip(1).First().ScannedBarcode : "N/A",
+				DateScanned = s.First().DateScanned.Value,
+				WarehouseSignature = string.Empty,
+				ScanningSignature = string.Empty
+			});
+
+		var listOfCustomers =
+			context.ScanningProjects.DistinctBy(d => d.Customer).ToList().Select(s => new SelectListItem()
+			{
+				Value = s.Customer,
+				Text = s.Customer
+			}).ToList();
+
+		//Query might be formed better
+		var exclude = new List<string>() { "TestClient", "ERROR", "" };
+		listOfCustomers.RemoveAll(i => exclude.Contains(i.Value));
+
+		var viewModel = new ReportViewModel() { ReportGroups = query, DateFrom = model.DateFrom, DateTo = model.DateTo, ListItems = listOfCustomers, Customer = model.Customer };
+		return View(viewModel);
+	}
+}
+
+
+public ActionResult DisplayPDF(ReportViewModel viewModel)
+{
+	using (AtomScanningContext context = new AtomScanningContext())
+	{
+		IEnumerable<ScanningReporting> query = context.BoxScans.Where(
+				b =>
+					b.DateScanned >= viewModel.DateFrom && b.DateScanned <= viewModel.DateTo &&
+					b.ScanningProject.Customer == viewModel.Customer)
+			.ToList()
+			.GroupBy(b => b.BOXId)
+			.Select(s => new ScanningReporting()
+			{
+				BoxId = s.Key.ToString(),
+				Barcode1 =
+					s.Count(t => t.ScannedBarcode.Length > 0) > 1
+						? s.Where(t => t.ScannedBarcode.Length > 0)
+							.OrderByDescending(t => t.Id)
+							.First()
+							.ScannedBarcode
+						: s.First().ScannedBarcode,
+				Barcode2 =
+					s.Count(t => t.ScannedBarcode.Length > 0) > 1
+						? s.Where(t => t.ScannedBarcode.Length > 0)
+							.OrderByDescending(t => t.Id)
+							.Skip(1)
+							.First()
+							.ScannedBarcode
+						: "N/A",
+				DateScanned = s.First().DateScanned.Value,
+				WarehouseSignature = string.Empty,
+				ScanningSignature = string.Empty
+			});
+
+		var listOfCustomers =
+			context.ScanningProjects.DistinctBy(d => d.Customer).ToList().Select(s => new SelectListItem()
+			{
+				Value = s.Customer,
+				Text = s.Customer
+			}).ToList();
+		var viewModel2 = new ReportViewModel() { ReportGroups = query, DateFrom = viewModel.DateFrom, DateTo = viewModel.DateTo, ListItems = listOfCustomers, Customer = viewModel.Customer };
+
+		byte[] pdf = SavePdf(viewModel2);
+		return File(pdf, "application/pdf");
+	}
+}
+
+public Byte[] SavePdf(ReportViewModel viewModel)
+{
+	MemoryStream stream = new MemoryStream();
+
+	PdfGenerateConfig config = new PdfGenerateConfig
+	{
+		PageOrientation = PageOrientation.Portrait,
+		PageSize = PageSize.A4,
+		MarginTop = 45,
+		MarginBottom = 56,
+		MarginLeft = 60,
+		MarginRight = 0
+	};
+	config.ManualPageSize = new PdfSharp.Drawing.XSize(900, 800);
+	
+	ViewData.Model = viewModel;
+	using (var sw = new StringWriter())
+	{
+		var viewResult = ViewEngines.Engines.FindPartialView(ControllerContext, "Index");
+		var viewContext = new ViewContext(ControllerContext, viewResult.View, ViewData, TempData, sw);
+		viewResult.View.Render(viewContext, sw);
+		viewResult.ViewEngine.ReleaseView(ControllerContext, viewResult.View);
+		var pageModelString = sw.GetStringBuilder().ToString();
+		string css = ".columnWidth{ width: 100px; text-align: centre; } " +
+					 "td{ page-break-inside: avoid; page-break-before: avoid; page-break-after: avoid; } " +
+					 "tr{ page-break-inside: avoid; page-break-before: avoid; page-break-after: avoid; }";
+		PdfDocument pdf = PdfGenerator.GeneratePdf(pageModelString, config, PdfGenerator.ParseStyleSheet(css));
+		pdf.Info.Author = "AdareSEC";
+		pdf.Info.Title = "Scanned Barcodes";
+		pdf.Save(stream);
+		return stream.ToArray();
+	}
+}
+
+Then we use button to call the method(to display in a full screen):
+<span class="savePdfButton"><input type="button" value="Full Screen Pdf View" class="btn btn-default button" onclick="location.href = '@Url.Action("DisplayPDF", "Reporting", new { customer = @Model.Customer, dateFrom = @Model.DateFrom, dateTo = @Model.DateTo })'"></span>
+
+Once we click search on the page it posts data to the method it gets dislpayed straight away:
+<object class="pdfDisplay" type="application/pdf" data="~/Scanning/Reporting/DisplayPdf?DateFrom=@Model.DateFrom.ToString("yyyy/MM/dd")&DateTo=@Model.DateTo.ToString("yyyy/MM/dd")&Customer=@Model.Customer"></object>
+
+
+
+//=======================		Defo Worked			=====================================
+public string RenderRazorViewToString(string viewName, object model)
+{
+	ViewData.Model = model;
+	using (var sw = new StringWriter())
+	{
+		var viewResult = ViewEngines.Engines.FindPartialView(ControllerContext, viewName);
+		var viewContext = new ViewContext(ControllerContext, viewResult.View, ViewData, TempData, sw);
+		viewResult.View.Render(viewContext, sw);
+		viewResult.ViewEngine.ReleaseView(ControllerContext, viewResult.View);
+		return sw.GetStringBuilder().ToString();
+	}
+}
+		
+public class GetPdf
+{
+	public Byte[] SavePdf(ReportViewModel viewModel, string pageName, string pageModel)
+	{
+		PdfGenerateConfig config = new PdfGenerateConfig
+		{
+			PageOrientation = PageOrientation.Portrait,
+			PageSize = PageSize.A4,
+			MarginTop = 22,
+			MarginBottom = 45,
+			MarginLeft = 60,
+			MarginRight = 0
+		};
+
+		string css = ".columnWidth{ width: 100px; text-align: centre; } td { page-break-inside: avoid; }";
+		PdfDocument pdf = PdfGenerator.GeneratePdf(pageModel, config, PdfGenerator.ParseStyleSheet(css));
+		pdf.Info.Author = "AdareSEC";
+		pdf.Info.Title = "Scanned Barcodes";
+
+		MemoryStream stream = new MemoryStream();
+		pdf.Save(stream);
+		pdf.Close();
+		return stream.ToArray();
+
+		//pdf.Save(filePath);
+		//Process.Start(filePath);
+	}
+}
+
+[HttpPost]
+public ActionResult Index(ReportViewModel model, string save)
+{
+	using (AtomScanningContext context = new AtomScanningContext())
+	{
+		IEnumerable<ScanningReporting> query = context.BoxScans.Where(
+				b => b.DateScanned >= model.DateFrom && b.DateScanned <= model.DateTo && b.ScanningProject.Customer == model.Customer)
+				.ToList()
+			.GroupBy(b => b.BOXId)
+			.Select(s => new ScanningReporting()
+			{
+				BoxId = s.Key.ToString(),
+				Barcode1 = s.Count(t => t.ScannedBarcode.Length > 0) > 1 ? s.Where(t => t.ScannedBarcode.Length > 0).OrderByDescending(t => t.Id).First().ScannedBarcode : s.First().ScannedBarcode,
+				Barcode2 = s.Count(t => t.ScannedBarcode.Length > 0) > 1 ? s.Where(t => t.ScannedBarcode.Length > 0).OrderByDescending(t => t.Id).Skip(1).First().ScannedBarcode : "N/A",
+				DateScanned = s.First().DateScanned.Value,
+				WarehouseSignature = string.Empty,
+				ScanningSignature = string.Empty
+			});
+
+		var listOfCustomers =
+			context.ScanningProjects.DistinctBy(d => d.Customer).ToList().Select(s => new SelectListItem()
+			{
+				Value = s.Customer,
+				Text = s.Customer
+			}).ToList();
+
+		//Query might be formed better
+		var exclude = new List<string>() {"TestClient", "ERROR", ""};      
+		listOfCustomers.RemoveAll(i => exclude.Contains(i.Value));
+
+		var viewModel = new ReportViewModel() { ReportGroups = query, DateFrom = model.DateFrom, DateTo = model.DateTo, ListItems = listOfCustomers, Customer = model.Customer };
+		if (!string.IsNullOrEmpty(save))
+		{
+			var pageModel = RenderRazorViewToString("Index", viewModel);
+			var date = DateTime.Now.ToShortDateString();
+			var filename = string.Format("ScannedBarcodes_{0}.pdf", date);
+			var generatePdf = new GetPdf();
+			var pdf = generatePdf.SavePdf(viewModel, "Index", pageModel);
+			return File(pdf, "application/pdf", filename);
+		}
+		return View(viewModel);
+	}
+}
+//====================================================================================================================
+
+
+
+
+
+//=======================		Some TESTS methods		=================================
+////This one takes an MVC page, and gets the rendered HTML from it:
+//public string RenderRazorViewToString(string viewName, object model)
+//{
+//    ViewData.Model = model;
+//    using (var sw = new StringWriter())
+//    {
+//        var viewResult = ViewEngines.Engines.FindPartialView(ControllerContext, viewName);
+//        var viewContext = new ViewContext(ControllerContext, viewResult.View, ViewData, TempData, sw);
+//        viewResult.View.Render(viewContext, sw);
+//        viewResult.ViewEngine.ReleaseView(ControllerContext, viewResult.View);
+//        return sw.GetStringBuilder().ToString();
+//    }
+//}
+
+
+//This one takes an HTML page and creates the PDF object:
+public static PdfDocument GetPdfDocFrom(string htmlString)
+{
+	PdfGenerateConfig config = new PdfGenerateConfig
+	{
+		PageOrientation = PageOrientation.Landscape,
+		PageSize = PageSize.A4
+	};
+
+	PdfDocument doc = PdfGenerator.GeneratePdf(htmlString, config);
+
+	return doc;
+}
+
+
+//=============== Random
+private byte[] CreateHtmlContent()
+{
+	string htmlContent = File.ReadAllText(@"htmlExample.txt");
+
+	Byte[] res = null;
+	using (MemoryStream ms = new MemoryStream())
+	{
+		PdfDocument pdfDocument = new PdfDocument();
+		PdfDocument pdf = PdfGenerator.GeneratePdf(htmlContent, PageSize.A4, 60);
+		pdf.Save(ms);
+		res = ms.ToArray();
+	}
+	return res;
+}
+
+
+        public static Byte[] PdfSharpConvert(String html)
+        {
+            Byte[] res = null;
+            using (MemoryStream ms = new MemoryStream())
+            {
+                var pdf = PdfGenerator.GeneratePdf(html, PageSize.A4);
+                pdf.Save(ms);
+                res = ms.ToArray();
+            }
+            return res;
+        }
+		
+		//=======================   		SAVE PdfDocument		==========================
+		[Authorize]
+        public FileResult View(int proofId)
+        {
+            var httpCookie = Request.Cookies.Get("Authorization");
+            if (httpCookie == null) return null;
+            var jwt = httpCookie.Value;
+            User.Identity.GetUserName();
+            var buffer = ResourceService.GetFile(jwt, Request.UserHostAddress, proofId.ToString());
+            return File(buffer, System.Net.Mime.MediaTypeNames.Application.Octet, "doc.pdf");
+        }
+		
+		
+		public ActionResult RetrieveDispatch(int Id)
+        {
+            var dispatch = EntityActions.GetDispatch(Id);
+            byte[] pdf = CreateLabel(dispatch.Cages, dispatch.Vehicle, dispatch.Driver, dispatch.Id, dispatch.DispatchedDate.ToString("dd-MM-yyyy HH:mm"));
+            return File(pdf, "application/pdf", "label.pdf");
+        }
+		
+		//public ActionResult DownloadPdf()
+        //{
+        //    var mydoc = ;
+        //    mydoc.GenerateLetter(PdfData);
+        //    byte[] pdf = mydoc.DocumentBytes;
+        //    var reader = new PdfReader(pdf);
+        //    using (var encrypted = new MemoryStream())
+        //    {
+        //        PdfEncryptor.Encrypt(reader, encrypted, true, "abc123", "secret", PdfWriter.ALLOW_SCREENREADERS);
+        //        return File(encrypted.ToArray(), "application/pdf", PdfData.Name + ".pdf");
+        //    }
+        //}
+		

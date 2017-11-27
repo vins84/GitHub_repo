@@ -1,0 +1,182 @@
+//==================		Button to call the method		===================
+<input type="button" class="btn btn-primary" id="label-btn" value="Print Labels" />
+
+
+//==================		div to view the results		===================
+@*<div id="partial-view-result">
+	<object class="pdfDisplay" type="application/pdf" data="~/MI/PVOCheck2?PVONumber=@Model.NavJobID&NavisionItem=@Model.Items.FirstOrDefault().NavisionStock&Quantity=@Model.Items.FirstOrDefault().QuantityToPick"></object>
+</div>*@
+
+
+//==================		jQuery to pull the info		===================
+(function ($) {
+
+        var model = '@Html.Raw(Json.Encode(Model.Items.Select(job => new LabelViewModel { NavisionItem = job.NavisionStock, PVONumber = job.NavJobID, Quantity = job.QuantityToPick }).ToList()))';
+        var labelViewModel = JSON.parse(model);
+        debugger;
+        $('#label-btn').on('click',
+            function () {
+
+                $.ajax({
+                    type: 'POST',
+                    url: '@Url.Action("PVOCheck2", "MI")',
+                    data: { labelViewModel: labelViewModel },
+                    cache: true
+                })
+                .done(function (data) {
+                    console.log('success');
+                    $('#partial-view-result').html(data);
+                });
+
+            });
+    })(jQuery);
+
+		
+		
+//==================		testing pulling info with C# instead of jQuery		===================	
+@using (Html.BeginForm("PVOCheck2", "MI", FormMethod.Post, new { Class = "form-horizontal" }))
+	{
+		List<LabelViewModel> me = new List<LabelViewModel>();
+		foreach (var job in Model.Items.Where(t => t.Type == StockType.Insert))
+		{
+			@Html.Hidden("NavisionItem", job.NavisionStock)
+			@Html.Hidden("PVONumber", job.NavJobID)
+			@Html.Hidden("Quantity", job.QuantityToPick.ToString())
+			me.Add(new LabelViewModel() { NavisionItem = job.NavisionStock, PVONumber = job.NavJobID, Quantity = job.QuantityToPick });
+			//LabelViewModel me = new LabelViewModel() { NavisionItem = job.NavisionStock, PVONumber = job.NavJobID, Quantity = job.QuantityToPick };
+			//List<LabelViewModel> me = new List<LabelViewModel>() { new LabelViewModel() { NavisionItem = job.NavisionStock, PVONumber = job.NavJobID, Quantity = job.QuantityToPick }};
+
+		}
+
+
+		@Html.ActionLink("PVO Check/Print Labels", "PVOCheck2", "MI", new
+		{
+			//reportTime = @Model.StreamDate.Value,
+			labelViewModel = Json.Encode(Model.Items.Select(job => new LabelViewModel { NavisionItem = job.NavisionStock, PVONumber = job.NavJobID, Quantity = job.QuantityToPick }).ToList())
+		}, new { @class = "btn btn-info" })
+		<input type="submit" class="btn btn-primary" style="float:right;" value="whoopWhoop" onclick="working();" />
+	}
+	
+	
+	
+//==================		Controller methods		===================		
+public FileResult PVOCheck2(List<LabelViewModel> labelViewModel)
+{
+	LabelViewModel one = labelViewModel.FirstOrDefault();
+
+	TestPdf(one);
+
+	byte[] pdf = SavePdf(one);
+
+
+
+	return File(pdf, "application/pdf");
+}
+
+public void TestPdf(LabelViewModel viewModel)
+{
+	// Create a new PDF document
+	PdfDocument document = new PdfDocument();
+	document.Info.Title = "Created with PDFsharp";
+
+	// Create an empty page
+	PdfPage page = document.AddPage();
+
+	// Get an XGraphics object for drawing
+	XGraphics gfx = XGraphics.FromPdfPage(page);
+	DrawRectangle(gfx, 2);
+	// Create a font
+	XFont font = new XFont("Verdana", 20, XFontStyle.BoldItalic);
+
+	// Draw the text
+	gfx.DrawString(viewModel.NavisionItem + "-" + viewModel.PVONumber + "-" + viewModel.Quantity, font, XBrushes.Black,
+	  new XRect(5, 5, page.Width, page.Height),
+	  XStringFormats.Center);
+
+	// Save the document...
+	const string filepath = "c:\\ProjectsGit\\";
+	const string filename = "HelloWorld.pdf";
+	var path = string.Format(filepath + filename);
+
+	document.Save(path);
+	// ...and start a viewer.
+	Process.Start(filename);
+}
+
+void DrawRectangle(XGraphics gfx, int number)
+{
+	BeginBox(gfx, number, "DrawRectangle");
+
+	XPen pen = new XPen(XColors.Navy, Math.PI);
+	XPen pen2 = new XPen(XColor.FromName("black"));
+
+	gfx.DrawRectangle(pen, 10, 0, 100, 60);
+	gfx.DrawRectangle(pen2, 100, 0, 200,0);
+
+	gfx.DrawRectangle(XBrushes.Azure, 130, 0, 100, 60);
+	gfx.DrawRectangle(pen, XBrushes.Blue, 10, 80, 100, 60);
+	gfx.DrawRectangle(pen, XBrushes.Brown, 150, 80, 60, 60);
+
+	EndBox(gfx);
+}
+public void BeginBox(XGraphics gfx, int number, string title)
+{
+	XRect rect = new XRect(0, 10, 200, 100);
+	//if (number % 2 == 0)
+	//    rect.X = 300 - 5;
+	//rect.Y = 40 + ((number - 1) / 2) * (200 - 5);
+	//rect.Inflate(-10, -10);
+	//rect.Inflate(-5, -5);
+
+	XFont font = new XFont("Verdana", 12, XFontStyle.Regular);
+	gfx.DrawString(title, font, XBrushes.Navy, rect, XStringFormats.TopCenter);
+
+	//rect.Inflate(-10, -5);
+	//rect.Y += 20;
+	//rect.Height -= 20;
+
+	//this.state = gfx.Save();
+	gfx.Save();
+	gfx.TranslateTransform(rect.X, rect.Y);
+}
+
+public void EndBox(XGraphics gfx)
+{
+	gfx.Restore();
+}
+
+
+public Byte[] SavePdf(LabelViewModel viewModel)
+{
+	MemoryStream stream = new MemoryStream();
+
+	PdfGenerateConfig config = new PdfGenerateConfig
+	{
+		PageOrientation = PageOrientation.Portrait,
+		PageSize = PageSize.B1,
+		MarginTop = 10,
+		MarginBottom = 10,
+		MarginLeft = 10,
+		MarginRight = 10
+	};
+	config.ManualPageSize = new PdfSharp.Drawing.XSize(900, 800);
+
+	ViewData.Model = viewModel;
+	using (var sw = new StringWriter())
+	{
+		var viewResult = ViewEngines.Engines.FindPartialView(ControllerContext, "Index");
+		var viewContext = new ViewContext(ControllerContext, viewResult.View, ViewData, TempData, sw);
+		viewResult.View.Render(viewContext, sw);
+		viewResult.ViewEngine.ReleaseView(ControllerContext, viewResult.View);
+		var pageModelString = sw.GetStringBuilder().ToString();
+		string css = ".columnWidth{ width: 100px; text-align: centre; } " +
+					 "td{ page-break-inside: avoid; page-break-before: avoid; page-break-after: avoid; } " +
+					 "tr{ page-break-inside: avoid; page-break-before: avoid; page-break-after: avoid; }";
+		PdfDocument pdf = PdfGenerator.GeneratePdf(pageModelString, config, PdfGenerator.ParseStyleSheet(css));
+		pdf.Info.Author = "AdareSEC";
+		pdf.Info.Title = "Scanned Barcodes";
+		pdf.Save(stream, false);
+
+		return stream.ToArray();
+	}
+}
